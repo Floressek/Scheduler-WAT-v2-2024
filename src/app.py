@@ -1,49 +1,88 @@
-from flask import Flask, jsonify, request, Response
-import csv
-import io
+from flask import Flask, jsonify, request, redirect
+from apscheduler.schedulers.background import BackgroundScheduler
 from scraper.scheduler_scraper import scrape_schedule
-from src.google_api.update_google_calendar import main as update_google_calendar
-import logging
+from google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
+from src.utils.custom_logger import main_logger as logger
+from google_auth_oauthlib.flow import Flow
+import os
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
+
+# Allow HTTP in local development environment
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+
+def scheduled_job():
+    logger.info("Starting scheduled job")
+    group = "WCY22IJ1S1"
+    user_agent = "Automated Scheduler Bot"
+
+    data, error = scrape_schedule(group, user_agent)
+    if error:
+        logger.error(f"Error from scrape_schedule: {error}")
+        return
+
+    logger.info("Successfully scraped schedule")
+
+    update_google_calendar(data)
+    logger.info("Job completed")
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=scheduled_job, trigger="interval", minutes=30)
+scheduler.start()
 
 
 @app.route('/scrape/<group>')
 def scrape(group):
-    user_agent = request.headers.get('User-Agent')
-    data, error = scrape_schedule(group, user_agent)
-    if error:
-        return jsonify({"error": error}), 400
+    logger.info(f"Received request for group: {group}")
+    try:
+        user_agent = request.headers.get('User-Agent')
+        logger.info(f"Using User-Agent: {user_agent}")
 
-    # Update Google Calendar with the scraped data
-    update_google_calendar(data)
+        data, error = scrape_schedule(group, user_agent)
+        if error:
+            logger.error(f"Error from scrape_schedule: {error}")
+            return jsonify({"error": error}), 400
 
-    return jsonify(data)
+        logger.info("Successfully scraped schedule")
+
+        update_google_calendar(data)
+        logger.info("Successfully updated Google Calendar")
+
+        return jsonify(data)
+    except Exception as e:
+        logger.exception(f"An error occurred: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
-@app.route('/scrape/<group>/csv')
-def scrape_csv(group):
-    user_agent = request.headers.get('User-Agent')
-    data, error = scrape_schedule(group, user_agent)
-    if error:
-        return jsonify({"error": error}), 400
-
-    output = io.StringIO()
-    fieldnames = ['Subject', 'Start Date', 'Start Time', 'End Date', 'End Time', 'All Day Event', 'Description',
-                  'Location', 'Private']
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-    for lesson in data:
-        writer.writerow(lesson)
-
-    output.seek(0)
-    return Response(
-        output.getvalue().encode('utf-8-sig'),
-        mimetype="text/csv",
-        headers={"Content-disposition": f"attachment; filename=academic_schedule_{group}.csv"}
+@app.route('/oauth2callback')
+def oauth2callback():
+    flow = Flow.from_client_secrets_file(
+        'credentials.json',
+        scopes=['https://www.googleapis.com/auth/calendar'],
+        redirect_uri='http://localhost:5000/oauth2callback'
     )
+
+    flow.fetch_token(authorization_response=request.url)
+
+    # Save the credentials
+    creds = flow.credentials
+    with open('token.json', 'w') as token:
+        token.write(creds.to_json())
+
+    return redirect('/')
+
+
+
+@app.route('/')
+def home():
+    return "WAT Scheduler is running. Use /scrape/<group> to manually trigger a scrape and update."
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Uruchom job od razu przy starcie
+    scheduled_job()
+
+    # Uruchom aplikację Flask
+    app.run(debug=True, use_reloader=False)

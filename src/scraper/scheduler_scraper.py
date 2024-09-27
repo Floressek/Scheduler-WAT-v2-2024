@@ -2,9 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import random
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
+from src.utils.custom_logger import scheduler_logger as logger
 
 # Dictionary mapping blocks to hours (adjust if needed)
 block_hours = {
@@ -62,21 +60,21 @@ def scrape_schedule(group, user_agent=None):
 
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        logging.debug(f"Full HTML content:\n{soup.prettify()}")
+        # logging.debug(f"Full HTML content:\n{soup.prettify()}")
 
         schedule_data = []
 
         lessons = soup.find('div', class_='lessons hidden')
         if not lessons:
-            logging.error("Could not find 'lessons hidden' div")
+            logger.error("Could not find 'lessons hidden' div")
             return None, "Schedule data not found on the page"
 
         lesson_divs = lessons.find_all('div', class_='lesson')
 
-        logging.debug(f"Found {len(lesson_divs)} lessons")
+        # logging.debug(f"Found {len(lesson_divs)} lessons")
 
         if not lesson_divs:
-            logging.warning("No lessons found on the page.")
+            logger.warning("No lessons found on the page.")
             return None, "No lessons found in the schedule"
 
         for lesson in lesson_divs:
@@ -113,16 +111,16 @@ def scrape_schedule(group, user_agent=None):
             }
 
             schedule_data.append(lesson_info)
-            logging.debug(f"Added lesson: {lesson_info}")
+            # logging.debug(f"Added lesson: {lesson_info}")
 
         if not schedule_data:
-            logging.warning("No lessons found in the schedule.")
+            logger.warning("No lessons found in the schedule.")
             return None, "No lessons found in the schedule"
 
         return schedule_data, None
     except requests.RequestException as e:
-        logging.error(f"Request failed: {str(e)}")
+        logger.error(f"Request failed: {str(e)}")
         return None, f"Failed to retrieve the page: {str(e)}"
     except Exception as e:
-        logging.error(f"An unexpected error occurred: {str(e)}")
+        logger.error(f"An unexpected error occurred: {str(e)}")
         return None, f"An unexpected error occurred: {str(e)}"
