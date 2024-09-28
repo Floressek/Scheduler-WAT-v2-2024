@@ -113,7 +113,7 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
     calendar_id = create_calendar(service, calendar_name)
 
     if not calendar_id:
-        logger.error("Nie udało się utworzyć nowego kalendarza. Operacja przerwana.")
+        logger.error("Not happening bro.")
         return
 
     logger.info(f"Created new calendar ID: {calendar_id}")
@@ -126,7 +126,7 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
         # Construct the event with corrected date format
         event = {
             'summary': lesson['Subject'],
-            'location': 'academy grounds',
+            'location': lesson['Location'],
             'private': True,
             'description': lesson['Description'],
             'start': {
@@ -140,7 +140,7 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
         }
 
         # Log the event data before creating it
-        logger.silly(f"Creating event: {event}")
+        logger.info(f"Creating event: {event}")
         create_event(service, calendar_id, event)
 
 

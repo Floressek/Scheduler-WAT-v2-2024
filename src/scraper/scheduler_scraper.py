@@ -106,7 +106,7 @@ def scrape_schedule(group, user_agent=None):
                 'End Time': end_time,
                 'All Day Event': False,
                 'Description': info,
-                'Location': '',  # Location not provided in the HTML
+                'Location': 'academic grounds',
                 'Private': True,
             }
 
