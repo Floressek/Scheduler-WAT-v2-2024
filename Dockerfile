@@ -5,6 +5,7 @@ FROM python:3.12.6-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+
 # Define environment variables for Railway compatibility
 ENV PYTHONPATH="/app:$PYTHONPATH"
 
