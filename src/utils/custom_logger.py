@@ -7,11 +7,10 @@ import colorama
 from colorama import Fore, Style
 
 # Inicjalizacja Colorama z force=True dla Railway
-colorama.init(autoreset=True, strip=False, convert=True)
+colorama.init(autoreset=True, strip=False, convert=True, force=True)
 
 # Definicja strefy czasowej dla Polski
 POLAND_TZ = pytz.timezone('Europe/Warsaw')
-
 
 class PolandFormatter(logging.Formatter):
     def __init__(self, fmt=None, datefmt=None, style='{'):
@@ -24,7 +23,6 @@ class PolandFormatter(logging.Formatter):
         else:
             s = dt.isoformat(timespec='milliseconds')
         return s
-
 
 class ColorFormatter(logging.Formatter):
     # Format logu z różnymi sekcjami dla lepszej czytelności
@@ -76,7 +74,6 @@ class ColorFormatter(logging.Formatter):
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S", style='{')
         return formatter.format(record)
 
-
 def setup_custom_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
@@ -96,7 +93,6 @@ def setup_custom_logger(name, log_file, level=logging.INFO):
     logger.addHandler(console_handler)
 
     return logger
-
 
 # Upewnij się, że katalog logów istnieje
 log_dir = "logs"
