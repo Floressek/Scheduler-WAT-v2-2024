@@ -6,12 +6,11 @@ import pytz
 import colorama
 from colorama import Fore, Style
 
-# Inicjalizacja Colorama
-colorama.init(autoreset=True)
+# Inicjalizacja Colorama z force=True dla Railway
+colorama.init(autoreset=True, strip=False, convert=True, force=True)
 
 # Definicja strefy czasowej dla Polski
 POLAND_TZ = pytz.timezone('Europe/Warsaw')
-
 
 class PolandFormatter(logging.Formatter):
     def __init__(self, fmt=None, datefmt=None, style='{'):
@@ -25,7 +24,6 @@ class PolandFormatter(logging.Formatter):
             s = dt.isoformat(timespec='milliseconds')
         return s
 
-
 class ColorFormatter(logging.Formatter):
     # Format logu z różnymi sekcjami dla lepszej czytelności
     FORMAT = ("{time_color}{asctime}{reset} [{level_color}{levelname}{reset}] {name_color}{module}:{funcName}:{"
@@ -33,7 +31,7 @@ class ColorFormatter(logging.Formatter):
 
     # Definicje kolorów dla różnych części logu
     COLOR_CODES = {
-        'TIME': Fore.CYAN,  # Kolor dla czasu
+        'TIME': Fore.CYAN,
         'LEVEL': {
             logging.DEBUG: Fore.BLUE,
             logging.INFO: Fore.GREEN,
@@ -41,7 +39,7 @@ class ColorFormatter(logging.Formatter):
             logging.ERROR: Fore.RED,
             logging.CRITICAL: Fore.MAGENTA,
         },
-        'NAME': Fore.WHITE,  # Biały kolor dla nazwy modułu/funkcji/linii
+        'NAME': Fore.WHITE,
         'MESSAGE': {
             logging.DEBUG: Fore.LIGHTBLUE_EX,
             logging.INFO: Fore.LIGHTWHITE_EX,
@@ -59,7 +57,6 @@ class ColorFormatter(logging.Formatter):
         message_color = self.COLOR_CODES['MESSAGE'].get(record.levelno, Fore.WHITE)
         reset = self.COLOR_CODES['RESET']
 
-        # Formatowanie logu z kolorami
         log_fmt = self.FORMAT.format(
             time_color=time_color,
             asctime="[{asctime}]",
@@ -74,20 +71,16 @@ class ColorFormatter(logging.Formatter):
             message="{message}"
         )
 
-        # Ustawienie formatera z nowym formatem i stylem '{}'
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S", style='{')
         return formatter.format(record)
-
 
 def setup_custom_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
-    # Ustawienie formatera dla Polski z nowym stylem '{}'
     poland_formatter = PolandFormatter('{asctime} {levelname} {module}:{funcName}:{lineno} - {message}',
                                        datefmt='%Y-%m-%d %H:%M:%S %Z')
 
-    # Handlery
     file_handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)
     file_handler.setFormatter(poland_formatter)
     file_handler.setLevel(level)
@@ -96,12 +89,10 @@ def setup_custom_logger(name, log_file, level=logging.INFO):
     console_handler.setFormatter(ColorFormatter())
     console_handler.setLevel(level)
 
-    # Dodanie handlerów do loggera
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
     return logger
-
 
 # Upewnij się, że katalog logów istnieje
 log_dir = "logs"
