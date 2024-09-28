@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, request, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
-from scraper.scheduler_scraper import scrape_schedule
-from google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
-from utils.custom_logger import main_logger as logger
+from src.scraper.scheduler_scraper import scrape_schedule
+from src.google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
+from src.utils.custom_logger import main_logger as logger
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
