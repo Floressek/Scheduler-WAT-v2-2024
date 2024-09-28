@@ -25,52 +25,70 @@ class PolandFormatter(logging.Formatter):
         return s
 
 class ColorFormatter(logging.Formatter):
+    # # Format logu z różnymi sekcjami dla lepszej czytelności
+    # FORMAT = ("{time_color}{asctime}{reset} [{level_color}{levelname}{reset}] {name_color}{module}:{funcName}:{"
+    #           "lineno}{reset} - {message_color}{message}{reset}")
+    #
+    # # Definicje kolorów dla różnych części logu
+    # COLOR_CODES = {
+    #     'TIME': Fore.CYAN,
+    #     'LEVEL': {
+    #         logging.DEBUG: Fore.BLUE,
+    #         logging.INFO: Fore.GREEN,
+    #         logging.WARNING: Fore.YELLOW,
+    #         logging.ERROR: Fore.RED,
+    #         logging.CRITICAL: Fore.MAGENTA,
+    #     },
+    #     'NAME': Fore.WHITE,
+    #     'MESSAGE': {
+    #         logging.DEBUG: Fore.LIGHTBLUE_EX,
+    #         logging.INFO: Fore.LIGHTWHITE_EX,
+    #         logging.WARNING: Fore.LIGHTYELLOW_EX,
+    #         logging.ERROR: Fore.LIGHTRED_EX,
+    #         logging.CRITICAL: Fore.LIGHTMAGENTA_EX,
+    #     },
+    #     'RESET': Style.RESET_ALL
+    # }
+    #
+    # def format(self, record):
+    #     time_color = self.COLOR_CODES['TIME']
+    #     level_color = self.COLOR_CODES['LEVEL'].get(record.levelno, Fore.WHITE)
+    #     name_color = self.COLOR_CODES['NAME']
+    #     message_color = self.COLOR_CODES['MESSAGE'].get(record.levelno, Fore.WHITE)
+    #     reset = self.COLOR_CODES['RESET']
+    #
+    #     log_fmt = self.FORMAT.format(
+    #         time_color=time_color,
+    #         asctime="[{asctime}]",
+    #         reset=reset,
+    #         level_color=level_color,
+    #         levelname="{levelname}",
+    #         name_color=name_color,
+    #         module="{module}",
+    #         funcName="{funcName}",
+    #         lineno="{lineno}",
+    #         message_color=message_color,
+    #         message="{message}"
+    #     )
+    #
+    #     formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S", style='{')
+    #     return formatter.format(record)
     # Format logu z różnymi sekcjami dla lepszej czytelności
-    FORMAT = ("{time_color}{asctime}{reset} [{level_color}{levelname}{reset}] {name_color}{module}:{funcName}:{"
-              "lineno}{reset} - {message_color}{message}{reset}")
+    FORMAT = ("\033[36m{asctime}\033[0m [{levelname}] {module}:{funcName}:{lineno} - {message}")
 
-    # Definicje kolorów dla różnych części logu
-    COLOR_CODES = {
-        'TIME': Fore.CYAN,
-        'LEVEL': {
-            logging.DEBUG: Fore.BLUE,
-            logging.INFO: Fore.GREEN,
-            logging.WARNING: Fore.YELLOW,
-            logging.ERROR: Fore.RED,
-            logging.CRITICAL: Fore.MAGENTA,
-        },
-        'NAME': Fore.WHITE,
-        'MESSAGE': {
-            logging.DEBUG: Fore.LIGHTBLUE_EX,
-            logging.INFO: Fore.LIGHTWHITE_EX,
-            logging.WARNING: Fore.LIGHTYELLOW_EX,
-            logging.ERROR: Fore.LIGHTRED_EX,
-            logging.CRITICAL: Fore.LIGHTMAGENTA_EX,
-        },
-        'RESET': Style.RESET_ALL
+    # Definicje kolorów dla różnych poziomów logowania
+    COLORS = {
+        logging.DEBUG: "\033[34m",  # Blue
+        logging.INFO: "\033[32m",  # Green
+        logging.WARNING: "\033[33m",  # Yellow
+        logging.ERROR: "\033[31m",  # Red
+        logging.CRITICAL: "\033[35m",  # Magenta
     }
 
     def format(self, record):
-        time_color = self.COLOR_CODES['TIME']
-        level_color = self.COLOR_CODES['LEVEL'].get(record.levelno, Fore.WHITE)
-        name_color = self.COLOR_CODES['NAME']
-        message_color = self.COLOR_CODES['MESSAGE'].get(record.levelno, Fore.WHITE)
-        reset = self.COLOR_CODES['RESET']
-
-        log_fmt = self.FORMAT.format(
-            time_color=time_color,
-            asctime="[{asctime}]",
-            reset=reset,
-            level_color=level_color,
-            levelname="{levelname}",
-            name_color=name_color,
-            module="{module}",
-            funcName="{funcName}",
-            lineno="{lineno}",
-            message_color=message_color,
-            message="{message}"
-        )
-
+        log_fmt = self.FORMAT
+        levelname = self.COLORS.get(record.levelno, "\033[37m") + record.levelname + "\033[0m"
+        log_fmt = log_fmt.replace("{levelname}", levelname)
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S", style='{')
         return formatter.format(record)
 
