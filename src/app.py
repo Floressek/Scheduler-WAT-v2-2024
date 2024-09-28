@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, before_first_request
 from apscheduler.schedulers.background import BackgroundScheduler
 from src.scraper.scheduler_scraper import scrape_schedule
 from src.google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
@@ -78,6 +78,12 @@ def scheduled_job():
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scheduled_job, trigger="interval", minutes=30)
 scheduler.start()
+logger.info("Scheduler started")
+
+
+@app.before_first_request
+def initialize():
+    scheduled_job()
 
 
 @app.route('/scrape/<group>')
@@ -124,6 +130,12 @@ def oauth2callback():
 @app.route('/')
 def home():
     return "WAT Scheduler is running. Use /scrape/<group> to manually trigger a scrape and update."
+
+
+@app.route('/run-job')
+def run_job():
+    scheduled_job()
+    return "Job executed successfully"
 
 
 if __name__ == '__main__':
