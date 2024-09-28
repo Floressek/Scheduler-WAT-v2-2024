@@ -12,6 +12,7 @@ from datetime import datetime, date
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = '/storage/token.json'
 
+
 def get_calendar_service():
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
@@ -138,6 +139,9 @@ def delete_all_events(service, calendar_id):
 #         logger.debug(f"Creating event: {event}")
 #         create_event(service, calendar_id, event)
 
+from googleapiclient.http import BatchHttpRequest
+
+
 def update_calendar_with_schedule(service, calendar_id, schedule_data):
     logger.info(f"Starting calendar update with {len(schedule_data)} events")
 
@@ -155,6 +159,7 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
 
         logger.info(f"Created new calendar ID: {calendar_id}")
 
+        batch = service.new_batch_http_request()
         for index, lesson in enumerate(schedule_data):
             try:
                 start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
@@ -174,14 +179,20 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
                     },
                 }
 
-                logger.debug(f"Creating event {index + 1}/{len(schedule_data)}: {event['summary']}")
-                create_event(service, calendar_id, event)
+                batch.add(service.events().insert(calendarId=calendar_id, body=event))
+
+                if (index + 1) % 50 == 0 or index == len(schedule_data) - 1:
+                    logger.info(f"Executing batch request for events {index - 48}-{index + 1}")
+                    batch.execute()
+                    batch = service.new_batch_http_request()
+
             except Exception as e:
                 logger.error(f"Error creating event {index + 1}: {str(e)}")
 
         logger.info("Calendar update completed successfully")
     except Exception as e:
         logger.error(f"Error during calendar update: {str(e)}")
+
 
 def main(schedule_data):
     service = get_calendar_service()

@@ -13,6 +13,9 @@ from google_auth_oauthlib.flow import Flow
 import os
 import sys
 
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 # Print some useful information for debugging
 print(f"Python path: {sys.path}")
 print(f"Current working directory: {os.getcwd()}")
