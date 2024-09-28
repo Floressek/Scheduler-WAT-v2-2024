@@ -136,7 +136,7 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
         }
 
         # Log the event data before creating it
-        logger.silly(f"Creating event: {event}")
+        logger.debug(f"Creating event: {event}")
         create_event(service, calendar_id, event)
 
 
