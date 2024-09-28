@@ -7,7 +7,7 @@ import colorama
 from colorama import Fore, Style
 
 # Inicjalizacja Colorama z force=True dla Railway
-colorama.init(autoreset=True, strip=False, convert=True, force=True)
+colorama.init(autoreset=True, strip=False, convert=True)
 
 # Definicja strefy czasowej dla Polski
 POLAND_TZ = pytz.timezone('Europe/Warsaw')
