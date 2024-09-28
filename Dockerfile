@@ -5,6 +5,9 @@ FROM python:3.12.6-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Define environment variables for Railway compatibility
+ENV PYTHONPATH="/app:$PYTHONPATH"
+
 # Create a working directory
 WORKDIR /app
 
@@ -23,9 +26,8 @@ RUN mkdir /storage
 # Expose port 5000 for Gunicorn
 EXPOSE 5000
 
-# Define environment variables for Railway compatibility
 ENV OAUTHLIB_INSECURE_TRANSPORT=1
-ENV FLASK_APP=app.py
+ENV FLASK_APP=src/app.py
 
 # Run the Flask app with Gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src.app:app"]

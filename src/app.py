@@ -2,11 +2,18 @@ from flask import Flask, jsonify, request, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
 from scraper.scheduler_scraper import scrape_schedule
 from google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
-from src.utils.custom_logger import main_logger as logger
+from utils.custom_logger import main_logger as logger
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 import os
+import sys
+
+# Print some useful information for debugging
+print(f"Python path: {sys.path}")
+print(f"Current working directory: {os.getcwd()}")
+print(f"Contents of current directory: {os.listdir('.')}")
+print(f"Contents of /app directory: {os.listdir('/app')}")
 
 app = Flask(__name__)
 
