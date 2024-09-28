@@ -52,6 +52,8 @@ def get_credentials():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
+            with open('credentials.json', 'r') as f:
+                client_config = json.load(f)
             flow = Flow.from_client_config(
                 client_config, SCOPES,
                 redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
@@ -77,11 +79,13 @@ def scheduled_job():
         return
 
     logger.info("Successfully scraped schedule")
-    logger.info(f"Scraped data: {data[:2] if data else 'No data'}...")  # Log first two items or 'No data' if data is None
+    logger.info(
+        f"Scraped data: {data[:2] if data else 'No data'}...")  # Log first two items or 'No data' if data is None
 
     logger.info("Updating Google Calendar")
     update_google_calendar(data)
     logger.info("Job completed")
+
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scheduled_job, trigger="interval", minutes=30)
@@ -93,6 +97,7 @@ def create_app():
     with app.app_context():
         scheduled_job()
     return app
+
 
 @app.route('/scrape/<group>')
 def scrape(group):
@@ -119,6 +124,8 @@ def scrape(group):
 
 @app.route('/oauth2callback')
 def oauth2callback():
+    with open('credentials.json', 'r') as f:
+        client_config = json.load(f)
     flow = Flow.from_client_config(
         client_config,
         scopes=['https://www.googleapis.com/auth/calendar'],
