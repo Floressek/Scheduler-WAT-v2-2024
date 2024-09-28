@@ -27,9 +27,9 @@ class PolandFormatter(logging.Formatter):
 
 
 class ColorFormatter(logging.Formatter):
-    """Dodaje kolorowanie do logów w konsoli."""
     # Format logu z różnymi sekcjami dla lepszej czytelności
-    FORMAT = "{time_color}{asctime}{reset} [{level_color}{levelname}{reset}] {name_color}{module}:{funcName}:{lineno}{reset} - {message_color}{message}{reset}"
+    FORMAT = ("{time_color}{asctime}{reset} [{level_color}{levelname}{reset}] {name_color}{module}:{funcName}:{"
+              "lineno}{reset} - {message_color}{message}{reset}")
 
     # Definicje kolorów dla różnych części logu
     COLOR_CODES = {
@@ -84,7 +84,8 @@ def setup_custom_logger(name, log_file, level=logging.INFO):
     logger.setLevel(level)
 
     # Ustawienie formatera dla Polski z nowym stylem '{}'
-    poland_formatter = PolandFormatter('{asctime} {levelname} {module}:{funcName}:{lineno} - {message}', datefmt='%Y-%m-%d %H:%M:%S %Z')
+    poland_formatter = PolandFormatter('{asctime} {levelname} {module}:{funcName}:{lineno} - {message}',
+                                       datefmt='%Y-%m-%d %H:%M:%S %Z')
 
     # Handlery
     file_handler = RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=5)

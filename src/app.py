@@ -3,6 +3,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from scraper.scheduler_scraper import scrape_schedule
 from google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
 from src.utils.custom_logger import main_logger as logger
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 import os
 
@@ -10,6 +12,44 @@ app = Flask(__name__)
 
 # Allow HTTP in local development environment
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+TOKEN_PATH = '/storage/token.json'
+
+client_config = {
+    "web": {
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+        "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_CERT_URL"),
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+        "redirect_uris": [
+            "https://your-railway-app-url.com/oauth2callback",
+            "http://localhost:5000/oauth2callback"
+        ]
+    }
+}
+
+
+def get_credentials():
+    creds = None
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = Flow.from_client_config(
+                client_config, SCOPES,
+                redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
+            auth_url, _ = flow.authorization_url(prompt='consent')
+            print(f"Please visit this URL to authorize the application: {auth_url}")
+            # Tutaj powinieneś dodać logikę do obsługi autoryzacji
+            # Na przykład, możesz zwrócić auth_url do frontendu
+            # i oczekiwać na callback z kodem autoryzacyjnym
+        with open(TOKEN_PATH, 'w') as token:
+            token.write(creds.to_json())
+    return creds
 
 
 def scheduled_job():
@@ -58,21 +98,20 @@ def scrape(group):
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    flow = Flow.from_client_secrets_file(
-        'credentials.json',
+    flow = Flow.from_client_config(
+        client_config,
         scopes=['https://www.googleapis.com/auth/calendar'],
-        redirect_uri='http://localhost:5000/oauth2callback'
+        redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback'
     )
 
     flow.fetch_token(authorization_response=request.url)
 
     # Save the credentials
     creds = flow.credentials
-    with open('token.json', 'w') as token:
+    with open(TOKEN_PATH, 'w') as token:
         token.write(creds.to_json())
 
     return redirect('/')
-
 
 
 @app.route('/')
@@ -81,8 +120,8 @@ def home():
 
 
 if __name__ == '__main__':
-    # Uruchom job od razu przy starcie
+    # Start as soon as the application starts
     scheduled_job()
 
-    # Uruchom aplikację Flask
+    # Application will run on http://localhost:5000/
     app.run(debug=True, use_reloader=False)

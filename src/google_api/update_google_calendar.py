@@ -10,15 +10,15 @@ from flask import session, redirect
 from datetime import datetime, date
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-
+TOKEN_PATH = '/storage/token.json'
 
 def get_calendar_service():
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first time.
 
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -27,7 +27,8 @@ def get_calendar_service():
         else:
             logger.info("Starting new authorization flow")
             flow = Flow.from_client_secrets_file(
-                'credentials.json', SCOPES, redirect_uri='http://localhost:5000/oauth2callback')
+                'credentials.json', SCOPES,
+                redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
 
             auth_url, _ = flow.authorization_url(prompt='consent')
 
@@ -39,7 +40,7 @@ def get_calendar_service():
             creds = flow.credentials
 
         logger.info("Saving credentials to token.json")
-        with open('token.json', 'w') as token:
+        with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
 
     try:

@@ -1,7 +1,3 @@
-Based on your project tree structure and the provided image, here's an updated and detailed `README.md` file that aligns with your project organization. This file also includes the sequence diagram created using `mermaid.js` syntax.
-
-### `README.md`
-
 ```markdown
 # Flask Google Calendar Scheduler
 
