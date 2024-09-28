@@ -29,15 +29,10 @@ def get_calendar_service():
             flow = Flow.from_client_secrets_file(
                 'credentials.json', SCOPES,
                 redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
-
             auth_url, _ = flow.authorization_url(prompt='consent')
-
-            print(f"Please go to this URL to authorize the application: {auth_url}")
-            print("After authorizing, you will get a code. Enter that code here:")
-            authorization_code = input()
-
-            flow.fetch_token(code=authorization_code)
-            creds = flow.credentials
+            logger.info(f"Please visit this URL to authorize the application: {auth_url}")
+            # Zamiast prosić o wprowadzenie kodu, zwróć None
+            return None
 
         logger.info("Saving credentials to token.json")
         with open(TOKEN_PATH, 'w') as token:
