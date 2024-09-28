@@ -31,7 +31,6 @@ def get_calendar_service():
                 redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
             auth_url, _ = flow.authorization_url(prompt='consent')
             logger.info(f"Please visit this URL to authorize the application: {auth_url}")
-            # Zamiast prosić o wprowadzenie kodu, zwróć None
             return None
 
         logger.info("Saving credentials to token.json")
@@ -99,46 +98,90 @@ def delete_all_events(service, calendar_id):
         return None
 
 
+# def update_calendar_with_schedule(service, calendar_id, schedule_data):
+#     # First, delete all events from the calendar
+#     delete_old_calendars(service, prefix='WAT-calendar')
+#
+#     # Log the schedule data for debugging
+#     calendar_name = f"WAT-calendar+{date.today().isoformat()}"
+#     logger.info(f"Creating new calendar: {calendar_name}")
+#     calendar_id = create_calendar(service, calendar_name)
+#
+#     if not calendar_id:
+#         logger.error("Naah, something went wrong")
+#         return
+#
+#     logger.info(f"Created new calendar ID: {calendar_id}")
+#
+#     for lesson in schedule_data:
+#         # Parse and reformat the dates to be in 'YYYY-MM-DD' format
+#         start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+#         end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+#
+#         # Construct the event with corrected date format
+#         event = {
+#             'summary': lesson['Subject'],
+#             'location': lesson['Location'],
+#             'private': True,
+#             'description': lesson['Description'],
+#             'start': {
+#                 'dateTime': f"{start_date}T{lesson['Start Time']}:00",
+#                 'timeZone': 'Europe/Warsaw',
+#             },
+#             'end': {
+#                 'dateTime': f"{end_date}T{lesson['End Time']}:00",
+#                 'timeZone': 'Europe/Warsaw',
+#             },
+#         }
+#
+#         # Log the event data before creating it
+#         logger.debug(f"Creating event: {event}")
+#         create_event(service, calendar_id, event)
+
 def update_calendar_with_schedule(service, calendar_id, schedule_data):
-    # First, delete all events from the calendar
-    delete_old_calendars(service, prefix='WAT-calendar')
+    logger.info(f"Starting calendar update with {len(schedule_data)} events")
 
-    # Log the schedule data for debugging
-    calendar_name = f"WAT-calendar+{date.today().isoformat()}"
-    logger.info(f"Creating new calendar: {calendar_name}")
-    calendar_id = create_calendar(service, calendar_name)
+    try:
+        delete_old_calendars(service, prefix='WAT-calendar')
+        logger.info("Old calendars deleted")
 
-    if not calendar_id:
-        logger.error("Nie udało się utworzyć nowego kalendarza. Operacja przerwana.")
-        return
+        calendar_name = f"WAT-calendar+{date.today().isoformat()}"
+        logger.info(f"Creating new calendar: {calendar_name}")
+        calendar_id = create_calendar(service, calendar_name)
 
-    logger.info(f"Created new calendar ID: {calendar_id}")
+        if not calendar_id:
+            logger.error("Failed to create new calendar")
+            return
 
-    for lesson in schedule_data:
-        # Parse and reformat the dates to be in 'YYYY-MM-DD' format
-        start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-        end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+        logger.info(f"Created new calendar ID: {calendar_id}")
 
-        # Construct the event with corrected date format
-        event = {
-            'summary': lesson['Subject'],
-            'location': 'academy grounds',
-            'private': True,
-            'description': lesson['Description'],
-            'start': {
-                'dateTime': f"{start_date}T{lesson['Start Time']}:00",
-                'timeZone': 'Europe/Warsaw',
-            },
-            'end': {
-                'dateTime': f"{end_date}T{lesson['End Time']}:00",
-                'timeZone': 'Europe/Warsaw',
-            },
-        }
+        for index, lesson in enumerate(schedule_data):
+            try:
+                start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+                end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
 
-        # Log the event data before creating it
-        logger.debug(f"Creating event: {event}")
-        create_event(service, calendar_id, event)
+                event = {
+                    'summary': lesson['Subject'],
+                    'location': lesson['Location'],
+                    'description': lesson['Description'],
+                    'start': {
+                        'dateTime': f"{start_date}T{lesson['Start Time']}:00",
+                        'timeZone': 'Europe/Warsaw',
+                    },
+                    'end': {
+                        'dateTime': f"{end_date}T{lesson['End Time']}:00",
+                        'timeZone': 'Europe/Warsaw',
+                    },
+                }
 
+                logger.debug(f"Creating event {index + 1}/{len(schedule_data)}: {event['summary']}")
+                create_event(service, calendar_id, event)
+            except Exception as e:
+                logger.error(f"Error creating event {index + 1}: {str(e)}")
+
+        logger.info("Calendar update completed successfully")
+    except Exception as e:
+        logger.error(f"Error during calendar update: {str(e)}")
 
 def main(schedule_data):
     service = get_calendar_service()
