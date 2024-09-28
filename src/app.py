@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
+from werkzeug import run_simple
+
 from src.scraper.scheduler_scraper import scrape_schedule
 from src.google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
 from src.utils.custom_logger import main_logger as logger
@@ -64,16 +66,18 @@ def scheduled_job():
     group = "WCY22IJ1S1"
     user_agent = "Automated Scheduler Bot"
 
+    logger.info(f"Scraping schedule for group: {group}")
     data, error = scrape_schedule(group, user_agent)
     if error:
         logger.error(f"Error from scrape_schedule: {error}")
         return
 
     logger.info("Successfully scraped schedule")
+    logger.info(f"Scraped data: {data[:2] if data else 'No data'}...")  # Log first two items or 'No data' if data is None
 
+    logger.info("Updating Google Calendar")
     update_google_calendar(data)
     logger.info("Job completed")
-
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scheduled_job, trigger="interval", minutes=30)
@@ -81,10 +85,10 @@ scheduler.start()
 logger.info("Scheduler started")
 
 
-@app.before_first_request
-def initialize():
-    scheduled_job()
-
+def create_app():
+    with app.app_context():
+        scheduled_job()
+    return app
 
 @app.route('/scrape/<group>')
 def scrape(group):
@@ -139,8 +143,5 @@ def run_job():
 
 
 if __name__ == '__main__':
-    # Start as soon as the application starts
-    scheduled_job()
-
-    # Application will run on http://localhost:5000/
-    app.run(debug=True, use_reloader=False)
+    app = create_app()
+    run_simple('localhost', 5000, app, use_reloader=False, use_debugger=True)
