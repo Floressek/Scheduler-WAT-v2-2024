@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect, before_first_request
+from flask import Flask, jsonify, request, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
 from src.scraper.scheduler_scraper import scrape_schedule
 from src.google_api.update_google_calendar import main as update_google_calendar, get_calendar_service
