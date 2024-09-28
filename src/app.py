@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, jsonify, request, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
 from werkzeug import run_simple
@@ -24,20 +26,22 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = '/storage/token.json'
 
-client_config = {
-    "web": {
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
-        "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
-        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
-        "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_CERT_URL"),
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-        "redirect_uris": [
-            "https://your-railway-app-url.com/oauth2callback",
-            "http://localhost:5000/oauth2callback"
-        ]
+if not os.path.exists('credentials.json'):
+    credentials = {
+        "web": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+            "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+            "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_CERT_URL"),
+            "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "redirect_uris": [
+                "https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback"
+            ]
+        }
     }
-}
+    with open('credentials.json', 'w') as f:
+        json.dump(credentials, f)
 
 
 def get_credentials():
