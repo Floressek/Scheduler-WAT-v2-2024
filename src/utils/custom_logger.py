@@ -24,23 +24,16 @@ console = Console(theme=custom_theme)
 class PolandFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         dt = datetime.fromtimestamp(record.created, POLAND_TZ)
-        if datefmt:
-            s = dt.strftime(datefmt)
-        else:
-            s = dt.isoformat(timespec='milliseconds')
-        return s
+        return dt.strftime('%Y-%m-%d %H:%M:%S %Z')
 
 
 def setup_custom_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    logger.propagate = False  # Prevent log messages from propagating to parent loggers
 
     # File formatter
     file_formatter = PolandFormatter(
-        '{asctime} | {levelname:<8} | {name:<12} | {module}:{funcName}:{lineno:<4} | {message}',
-        datefmt='%Y-%m-%d %H:%M:%S %Z',
-        style='{'
+        '%(asctime)s | %(levelname)-8s | %(name)-12s | %(message)s'
     )
 
     # File handler
@@ -70,6 +63,6 @@ log_dir = "logs"
 os.makedirs(log_dir, exist_ok=True)
 
 # Create loggers
-main_logger = setup_custom_logger('[Main]', os.path.join(log_dir, 'main.log'))
-scheduler_logger = setup_custom_logger('[Scheduler]', os.path.join(log_dir, 'scheduler.log'))
-google_api_logger = setup_custom_logger('[GoogleAPI]', os.path.join(log_dir, 'google_api.log'))
+main_logger = setup_custom_logger('Main', os.path.join(log_dir, 'main.log'))
+scheduler_logger = setup_custom_logger('Scheduler', os.path.join(log_dir, 'scheduler.log'))
+google_api_logger = setup_custom_logger('GoogleAPI', os.path.join(log_dir, 'google_api.log'))
