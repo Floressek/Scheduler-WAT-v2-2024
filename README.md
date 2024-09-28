@@ -1,8 +1,4 @@
-Based on your project tree structure and the provided image, here's an updated and detailed `README.md` file that aligns with your project organization. This file also includes the sequence diagram created using `mermaid.js` syntax.
 
-### `README.md`
-
-```markdown
 # Flask Google Calendar Scheduler
 
 This project is an automated scheduling system built using Flask. It scrapes schedule data and integrates it with Google Calendar to create and update calendar events dynamically. The project also includes custom logging to track activities and errors, providing a robust solution for schedule management and Google Calendar integration.
