@@ -30,6 +30,5 @@ EXPOSE 5000
 ENV OAUTHLIB_INSECURE_TRANSPORT=1
 ENV FLASK_APP=src/app.py
 
-# Run the Flask app with Gunicorn
-
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src.app:create_app()"]
+# Run the Flask app with Gunicorn with increased timeout
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "300", "src.app:create_app()"]
