@@ -1,4 +1,4 @@
-```markdown
+
 # Flask Google Calendar Scheduler
 
 This project is an automated scheduling system built using Flask. It scrapes schedule data and integrates it with Google Calendar to create and update calendar events dynamically. The project also includes custom logging to track activities and errors, providing a robust solution for schedule management and Google Calendar integration.
