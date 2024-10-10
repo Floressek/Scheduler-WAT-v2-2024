@@ -1,5 +1,6 @@
 import json
-
+import os
+import sys
 from flask import Flask, jsonify, request, redirect
 from apscheduler.schedulers.background import BackgroundScheduler
 from werkzeug import run_simple
@@ -10,8 +11,7 @@ from src.utils.custom_logger import main_logger as logger
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
-import os
-import sys
+
 
 # import urllib3
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -46,6 +46,8 @@ if not os.path.exists('credentials.json'):
     with open('credentials.json', 'w') as f:
         json.dump(credentials, f)
 
+scheduler = BackgroundScheduler()
+scheduler_started = False  # Track if the scheduler has been started
 
 def get_credentials():
     creds = None
@@ -90,16 +92,28 @@ def scheduled_job():
     logger.info("Job completed")
 
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=scheduled_job, trigger="interval", hours=36)
-scheduler.start()
-logger.info("Scheduler started")
+# scheduler = BackgroundScheduler()
+# scheduler.add_job(func=scheduled_job, trigger="interval", hours=36)
+# scheduler.start()
+# logger.info("Scheduler started")
+#
+#
+# def create_app():
+#     with app.app_context():
+#         scheduled_job()
+#     return app
 
-
-def create_app():
-    with app.app_context():
-        scheduled_job()
-    return app
+@app.route('/start-scheduler', methods=['POST'])
+def start_scheduler():
+    global scheduler_started
+    if not scheduler_started:
+        scheduler.add_job(func=scheduled_job, trigger="interval", hours=36)
+        scheduler.start()
+        scheduler_started = True
+        logger.info("Scheduler started via webhook")
+        return jsonify({"message": "Scheduler started successfully"}), 200
+    else:
+        return jsonify({"message": "Scheduler is already running"}), 200
 
 
 @app.route('/delete-token', methods=["POST"])
@@ -170,5 +184,5 @@ def run_job():
 
 
 if __name__ == '__main__':
-    app = create_app()
+    # app = create_app()
     run_simple('localhost', 5000, app, use_reloader=False, use_debugger=True)
