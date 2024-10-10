@@ -102,6 +102,19 @@ def create_app():
     return app
 
 
+@app.route('/delete-token', methods=["POST"])
+def delete_token():
+    try:
+        if os.path.exists(TOKEN_PATH):
+            os.remove(TOKEN_PATH)
+            return jsonify({"message": "Token deleted successfully"}), 200
+        else:
+            return jsonify({"message": "Token does not exist"}), 404
+    except Exception as e:
+        logger.exception(f"An error occurred: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
 @app.route('/scrape/<group>')
 def scrape(group):
     logger.info(f"Received request for group: {group}")
