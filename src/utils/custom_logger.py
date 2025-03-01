@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 import pytz
 import os
+
 os.environ['FORCE_COLOR'] = '1'
 
 # Define timezone for Poland
@@ -12,13 +13,14 @@ POLAND_TZ = pytz.timezone('Europe/Warsaw')
 # ANSI color codes
 COLORS = {
     'TIMESTAMP': '\033[36m',  # Cyan
-    'DEBUG': '\033[94m',      # Light Blue
-    'INFO': '\033[92m',       # Light Green
-    'WARNING': '\033[93m',    # Light Yellow
-    'ERROR': '\033[91m',      # Light Red
-    'CRITICAL': '\033[95m',   # Light Magenta
-    'RESET': '\033[0m'        # Reset to default color
+    'DEBUG': '\033[94m',  # Light Blue
+    'INFO': '\033[92m',  # Light Green
+    'WARNING': '\033[93m',  # Light Yellow
+    'ERROR': '\033[91m',  # Light Red
+    'CRITICAL': '\033[95m',  # Light Magenta
+    'RESET': '\033[0m'  # Reset to default color
 }
+
 
 class ColoredFormatter(logging.Formatter):
     def format(self, record):
@@ -32,6 +34,7 @@ class ColoredFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         dt = datetime.fromtimestamp(record.created, POLAND_TZ)
         return dt.strftime(datefmt or '%Y-%m-%d %H:%M:%S %Z')
+
 
 def setup_custom_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
@@ -57,6 +60,7 @@ def setup_custom_logger(name, log_file, level=logging.INFO):
     logger.addHandler(console_handler)
 
     return logger
+
 
 # Ensure log directory exists
 log_dir = "logs"
