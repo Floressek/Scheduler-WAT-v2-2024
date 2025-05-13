@@ -177,6 +177,21 @@ def oauth2callback():
 def home():
     return "WAT Scheduler is running. Use /scrape/<group> to manually trigger a scrape and update."
 
+@app.route('/api/status', methods=['GET'])
+def get_status():
+    try:
+        status = {
+            "status": "running",
+            "version": "1.0",
+            "scheduler_active": scheduler.running,
+            "google_calendar_connected": os.path.exists(TOKEN_PATH),
+            "environment": os.environ.get("FLASK_ENV", "development"),
+            "python_version": sys.version
+        }
+        return jsonify(status), 200
+    except Exception as e:
+        logger.exception(f"Błąd podczas sprawdzania statusu: {str(e)}")
+        return jsonify({"error": f"Błąd wewnętrzny serwera: {str(e)}"}), 500
 
 @app.route('/run-job')
 def run_job():

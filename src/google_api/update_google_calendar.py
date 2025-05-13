@@ -98,50 +98,6 @@ def delete_all_events(service, calendar_id):
         logger.error(f"An error occurred: {e}")
         return None
 
-
-# def update_calendar_with_schedule(service, calendar_id, schedule_data):
-#     # First, delete all events from the calendar
-#     delete_old_calendars(service, prefix='WAT-calendar')
-#
-#     # Log the schedule data for debugging
-#     calendar_name = f"WAT-calendar+{date.today().isoformat()}"
-#     logger.info(f"Creating new calendar: {calendar_name}")
-#     calendar_id = create_calendar(service, calendar_name)
-#
-#     if not calendar_id:
-#         logger.error("Naah, something went wrong")
-#         return
-#
-#     logger.info(f"Created new calendar ID: {calendar_id}")
-#
-#     for lesson in schedule_data:
-#         # Parse and reformat the dates to be in 'YYYY-MM-DD' format
-#         start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-#         end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-#
-#         # Construct the event with corrected date format
-#         event = {
-#             'summary': lesson['Subject'],
-#             'location': lesson['Location'],
-#             'private': True,
-#             'description': lesson['Description'],
-#             'start': {
-#                 'dateTime': f"{start_date}T{lesson['Start Time']}:00",
-#                 'timeZone': 'Europe/Warsaw',
-#             },
-#             'end': {
-#                 'dateTime': f"{end_date}T{lesson['End Time']}:00",
-#                 'timeZone': 'Europe/Warsaw',
-#             },
-#         }
-#
-#         # Log the event data before creating it
-#         logger.debug(f"Creating event: {event}")
-#         create_event(service, calendar_id, event)
-
-from googleapiclient.http import BatchHttpRequest
-
-
 def update_calendar_with_schedule(service, calendar_id, schedule_data):
     logger.info(f"Starting calendar update with {len(schedule_data)} events")
 
