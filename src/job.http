@@ -1,0 +1,20 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=PyCharm
+
+###
+# curl https://scheduler-wat-v2-2024-production.up.railway.app/
+GET https://scheduler-wat-v2-2024-production.up.railway.app/
+
+###
+
+# curl -X POST https://scheduler-wat-v2-2024-production.up.railway.app/delete-token
+POST https://scheduler-wat-v2-2024-production.up.railway.app/delete-token
+
+###
+
+# curl https://scheduler-wat-v2-2024-production.up.railway.app/run-job
+GET https://scheduler-wat-v2-2024-production.up.railway.app/run-job
+
+###
+

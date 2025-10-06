@@ -10,6 +10,7 @@ from flask import session, redirect
 from datetime import datetime, date
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+TOKEN_PATH = '/storage/token.json'
 
 
 def get_calendar_service():
@@ -17,8 +18,8 @@ def get_calendar_service():
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first time.
 
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -27,19 +28,14 @@ def get_calendar_service():
         else:
             logger.info("Starting new authorization flow")
             flow = Flow.from_client_secrets_file(
-                'credentials.json', SCOPES, redirect_uri='http://localhost:5000/oauth2callback')
-
+                'credentials.json', SCOPES,
+                redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
             auth_url, _ = flow.authorization_url(prompt='consent')
-
-            print(f"Please go to this URL to authorize the application: {auth_url}")
-            print("After authorizing, you will get a code. Enter that code here:")
-            authorization_code = input()
-
-            flow.fetch_token(code=authorization_code)
-            creds = flow.credentials
+            logger.info(f"Please visit this URL to authorize the application: {auth_url}")
+            return None
 
         logger.info("Saving credentials to token.json")
-        with open('token.json', 'w') as token:
+        with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
 
     try:
@@ -103,45 +99,99 @@ def delete_all_events(service, calendar_id):
         return None
 
 
+# def update_calendar_with_schedule(service, calendar_id, schedule_data):
+#     # First, delete all events from the calendar
+#     delete_old_calendars(service, prefix='WAT-calendar')
+#
+#     # Log the schedule data for debugging
+#     calendar_name = f"WAT-calendar+{date.today().isoformat()}"
+#     logger.info(f"Creating new calendar: {calendar_name}")
+#     calendar_id = create_calendar(service, calendar_name)
+#
+#     if not calendar_id:
+#         logger.error("Naah, something went wrong")
+#         return
+#
+#     logger.info(f"Created new calendar ID: {calendar_id}")
+#
+#     for lesson in schedule_data:
+#         # Parse and reformat the dates to be in 'YYYY-MM-DD' format
+#         start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+#         end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+#
+#         # Construct the event with corrected date format
+#         event = {
+#             'summary': lesson['Subject'],
+#             'location': lesson['Location'],
+#             'private': True,
+#             'description': lesson['Description'],
+#             'start': {
+#                 'dateTime': f"{start_date}T{lesson['Start Time']}:00",
+#                 'timeZone': 'Europe/Warsaw',
+#             },
+#             'end': {
+#                 'dateTime': f"{end_date}T{lesson['End Time']}:00",
+#                 'timeZone': 'Europe/Warsaw',
+#             },
+#         }
+#
+#         # Log the event data before creating it
+#         logger.debug(f"Creating event: {event}")
+#         create_event(service, calendar_id, event)
+
+from googleapiclient.http import BatchHttpRequest
+
+
 def update_calendar_with_schedule(service, calendar_id, schedule_data):
-    # First, delete all events from the calendar
-    delete_old_calendars(service, prefix='WAT-calendar')
+    logger.info(f"Starting calendar update with {len(schedule_data)} events")
 
-    # Log the schedule data for debugging
-    calendar_name = f"WAT-calendar+{date.today().isoformat()}"
-    logger.info(f"Creating new calendar: {calendar_name}")
-    calendar_id = create_calendar(service, calendar_name)
+    try:
+        delete_old_calendars(service, prefix='WAT-calendar')
+        logger.info("Old calendars deleted")
 
-    if not calendar_id:
-        logger.error("Not happening bro.")
-        return
+        calendar_name = f"WAT-calendar+{date.today().isoformat()}"
+        logger.info(f"Creating new calendar: {calendar_name}")
+        calendar_id = create_calendar(service, calendar_name)
 
-    logger.info(f"Created new calendar ID: {calendar_id}")
+        if not calendar_id:
+            logger.error("Failed to create new calendar")
+            return
 
-    for lesson in schedule_data:
-        # Parse and reformat the dates to be in 'YYYY-MM-DD' format
-        start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-        end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+        logger.info(f"Created new calendar ID: {calendar_id}")
 
-        # Construct the event with corrected date format
-        event = {
-            'summary': lesson['Subject'],
-            'location': lesson['Location'],
-            'private': True,
-            'description': lesson['Description'],
-            'start': {
-                'dateTime': f"{start_date}T{lesson['Start Time']}:00",
-                'timeZone': 'Europe/Warsaw',
-            },
-            'end': {
-                'dateTime': f"{end_date}T{lesson['End Time']}:00",
-                'timeZone': 'Europe/Warsaw',
-            },
-        }
+        batch = service.new_batch_http_request()
+        for index, lesson in enumerate(schedule_data):
+            try:
+                start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+                end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
 
-        # Log the event data before creating it
-        logger.info(f"Creating event: {event}")
-        create_event(service, calendar_id, event)
+                event = {
+                    'summary': lesson['Subject'],
+                    'location': lesson['Location'],
+                    'description': lesson['Description'],
+                    'start': {
+                        'dateTime': f"{start_date}T{lesson['Start Time']}:00",
+                        'timeZone': 'Europe/Warsaw',
+                    },
+                    'end': {
+                        'dateTime': f"{end_date}T{lesson['End Time']}:00",
+                        'timeZone': 'Europe/Warsaw',
+                    },
+                }
+
+                batch.add(service.events().insert(calendarId=calendar_id, body=event))
+
+                if (index + 1) % 50 == 0 or index == len(schedule_data) - 1:
+                    logger.info(f"Executing batch request for events {index - 48}-{index + 1}")
+                    batch.execute()
+                    batch = service.new_batch_http_request()
+
+            except Exception as e:
+                logger.error(f"Error creating event {index + 1}: {str(e)}")
+
+        logger.info("Calendar update completed successfully")
+    except Exception as e:
+        logger.error(f"Error during calendar update: {str(e)}")
 
 
 def main(schedule_data):
@@ -161,5 +211,4 @@ def main(schedule_data):
 
 
 if __name__ == '__main__':
-    # To jest tylko do testów, gdy uruchamiamy ten skrypt bezpośrednio
     print("This script is meant to be imported, not run directly.")
