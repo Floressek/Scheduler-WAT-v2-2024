@@ -211,5 +211,4 @@ def main(schedule_data):
 
 
 if __name__ == '__main__':
-    # To jest tylko do testów, gdy uruchamiamy ten skrypt bezpośrednio
     print("This script is meant to be imported, not run directly.")

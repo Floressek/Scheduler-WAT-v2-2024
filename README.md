@@ -180,12 +180,10 @@ Contributions are welcome! Please fork the repository, make your changes, and su
 ## License
 
 This project is licensed under the MIT License.
-```
 
-### Key Improvements:
+
+### Key Improvements from the last version:
 1. **Detailed Project Structure:** Reflecting your project tree.
 2. **Environment Variables:** Added configuration details and recommendations for setting up environment variables.
 3. **Sequence Diagram:** Explained the flow of data between the different components using a sequence diagram.
 4. **Log Levels and Colors:** Explained how the custom logger differentiates between log levels using colors.
-
-If you have any additional customization requests or want to include other details, let me know!
