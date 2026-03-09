@@ -12,9 +12,6 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
-# import urllib3
-# urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 # Print some useful information for debugging
 print(f"Python path: {sys.path}")
 print(f"Current working directory: {os.getcwd()}")
@@ -44,11 +41,6 @@ if not os.path.exists('credentials.json'):
     }
     with open('credentials.json', 'w') as f:
         json.dump(credentials, f)
-
-
-#
-# scheduler = BackgroundScheduler()
-# scheduler_started = False  # Track if the scheduler has been started
 
 def get_credentials():
     creds = None
@@ -103,19 +95,6 @@ def create_app():
     with app.app_context():
         scheduled_job()
     return app
-
-# @app.route('/start-scheduler', methods=['POST'])
-# def start_scheduler():
-#     global scheduler_started
-#     if not scheduler_started:
-#         scheduler.add_job(func=scheduled_job, trigger="interval", hours=36)
-#         scheduler.start()
-#         scheduler_started = True
-#         logger.info("Scheduler started via webhook")
-#         return jsonify({"message": "Scheduler started successfully"}), 200
-#     else:
-#         return jsonify({"message": "Scheduler is already running"}), 200
-
 
 @app.route('/delete-token', methods=["POST"])
 def delete_token():
