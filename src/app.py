@@ -12,9 +12,6 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
-# import urllib3
-# urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 # Print some useful information for debugging
 print(f"Python path: {sys.path}")
 print(f"Current working directory: {os.getcwd()}")
@@ -46,10 +43,6 @@ if not os.path.exists('credentials.json'):
         json.dump(credentials, f)
 
 
-#
-# scheduler = BackgroundScheduler()
-# scheduler_started = False  # Track if the scheduler has been started
-
 def get_credentials():
     creds = None
     if os.path.exists(TOKEN_PATH):
@@ -65,9 +58,6 @@ def get_credentials():
                 redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
             auth_url, _ = flow.authorization_url(prompt='consent')
             print(f"Please visit this URL to authorize the application: {auth_url}")
-            # Tutaj powinieneś dodać logikę do obsługi autoryzacji
-            # Na przykład, możesz zwrócić auth_url do frontendu
-            # i oczekiwać na callback z kodem autoryzacyjnym
         with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
     return creds
@@ -86,7 +76,7 @@ def scheduled_job():
 
     logger.info("Successfully scraped schedule")
     logger.info(
-        f"Scraped data: {data[:2] if data else 'No data'}...")  # Log first two items or 'No data' if data is None
+        f"Scraped data: {data[:2] if data else 'No data'}...")
 
     logger.info("Updating Google Calendar")
     update_google_calendar(data)
@@ -103,19 +93,6 @@ def create_app():
     with app.app_context():
         scheduled_job()
     return app
-
-# @app.route('/start-scheduler', methods=['POST'])
-# def start_scheduler():
-#     global scheduler_started
-#     if not scheduler_started:
-#         scheduler.add_job(func=scheduled_job, trigger="interval", hours=36)
-#         scheduler.start()
-#         scheduler_started = True
-#         logger.info("Scheduler started via webhook")
-#         return jsonify({"message": "Scheduler started successfully"}), 200
-#     else:
-#         return jsonify({"message": "Scheduler is already running"}), 200
-
 
 @app.route('/delete-token', methods=["POST"])
 def delete_token():
