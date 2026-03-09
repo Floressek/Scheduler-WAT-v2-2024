@@ -99,47 +99,6 @@ def delete_all_events(service, calendar_id):
         return None
 
 
-# def update_calendar_with_schedule(service, calendar_id, schedule_data):
-#     # First, delete all events from the calendar
-#     delete_old_calendars(service, prefix='WAT-calendar')
-#
-#     # Log the schedule data for debugging
-#     calendar_name = f"WAT-calendar+{date.today().isoformat()}"
-#     logger.info(f"Creating new calendar: {calendar_name}")
-#     calendar_id = create_calendar(service, calendar_name)
-#
-#     if not calendar_id:
-#         logger.error("Naah, something went wrong")
-#         return
-#
-#     logger.info(f"Created new calendar ID: {calendar_id}")
-#
-#     for lesson in schedule_data:
-#         # Parse and reformat the dates to be in 'YYYY-MM-DD' format
-#         start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-#         end_date = datetime.strptime(lesson['End Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-#
-#         # Construct the event with corrected date format
-#         event = {
-#             'summary': lesson['Subject'],
-#             'location': lesson['Location'],
-#             'private': True,
-#             'description': lesson['Description'],
-#             'start': {
-#                 'dateTime': f"{start_date}T{lesson['Start Time']}:00",
-#                 'timeZone': 'Europe/Warsaw',
-#             },
-#             'end': {
-#                 'dateTime': f"{end_date}T{lesson['End Time']}:00",
-#                 'timeZone': 'Europe/Warsaw',
-#             },
-#         }
-#
-#         # Log the event data before creating it
-#         logger.debug(f"Creating event: {event}")
-#         create_event(service, calendar_id, event)
-
-from googleapiclient.http import BatchHttpRequest
 
 
 def update_calendar_with_schedule(service, calendar_id, schedule_data):
@@ -159,7 +118,15 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
 
         logger.info(f"Created new calendar ID: {calendar_id}")
 
-        batch = service.new_batch_http_request()
+        def batch_callback(request_id, response, exception):
+            if exception is not None:
+                logger.error(f"Error in batch request {request_id}: {exception}")
+            else:
+                logger.debug(f"Event created successfully: {response.get('id', 'unknown')}")
+
+        batch = service.new_batch_http_request(callback=batch_callback)
+        batch_start_index = 0
+        
         for index, lesson in enumerate(schedule_data):
             try:
                 start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')
@@ -181,13 +148,19 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
 
                 batch.add(service.events().insert(calendarId=calendar_id, body=event))
 
-                if (index + 1) % 50 == 0 or index == len(schedule_data) - 1:
-                    logger.info(f"Executing batch request for events {index - 48}-{index + 1}")
+                if (index + 1) % 50 == 0:
+                    logger.info(f"Executing batch request for events {batch_start_index + 1}-{index + 1}")
                     batch.execute()
-                    batch = service.new_batch_http_request()
+                    batch = service.new_batch_http_request(callback=batch_callback)
+                    batch_start_index = index + 1
 
             except Exception as e:
                 logger.error(f"Error creating event {index + 1}: {str(e)}")
+
+        # Execute remaining events in the last batch
+        if len(batch._requests) > 0:
+            logger.info(f"Executing batch request for events {batch_start_index + 1}-{len(schedule_data)}")
+            batch.execute()
 
         logger.info("Calendar update completed successfully")
     except Exception as e:
@@ -211,5 +184,4 @@ def main(schedule_data):
 
 
 if __name__ == '__main__':
-    # To jest tylko do testów, gdy uruchamiamy ten skrypt bezpośrednio
     print("This script is meant to be imported, not run directly.")
