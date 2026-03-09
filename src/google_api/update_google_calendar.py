@@ -99,8 +99,6 @@ def delete_all_events(service, calendar_id):
         return None
 
 
-
-
 def update_calendar_with_schedule(service, calendar_id, schedule_data):
     logger.info(f"Starting calendar update with {len(schedule_data)} events")
 
@@ -126,7 +124,7 @@ def update_calendar_with_schedule(service, calendar_id, schedule_data):
 
         batch = service.new_batch_http_request(callback=batch_callback)
         batch_start_index = 0
-        
+
         for index, lesson in enumerate(schedule_data):
             try:
                 start_date = datetime.strptime(lesson['Start Date'], '%d/%m/%Y').strftime('%Y-%m-%d')

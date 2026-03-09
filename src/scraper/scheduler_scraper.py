@@ -10,9 +10,9 @@ block_hours = {
     "block2": {"START": "09:50", "END": "11:25"},
     "block3": {"START": "11:40", "END": "13:15"},
     "block4": {"START": "13:30", "END": "15:05"},
-    "block5": {"START": "15:45", "END": "17:20"},
-    "block6": {"START": "17:35", "END": "19:10"},
-    "block7": {"START": "19:25", "END": "21:10"}
+    "block5": {"START": "16:00", "END": "17:35"},
+    "block6": {"START": "17:50", "END": "19:25"},
+    "block7": {"START": "19:40", "END": "21:15"}
 }
 
 # Adding a constant value - location
@@ -46,7 +46,6 @@ def parse_date(date_str):
 
 
 def scrape_schedule(group, user_agent=None):
-    # Get current timestamp in seconds
     current_timestamp = int(datetime.now().timestamp())
 
     url = f'https://planzajec.wcy.wat.edu.pl/pl/rozklad?date={current_timestamp}&grupa_id={group}'
@@ -85,18 +84,10 @@ def scrape_schedule(group, user_agent=None):
             color = lesson.find('span', class_='colorp').text
             teacher_initials = lesson.find('span', class_='sSkrotProwadzacego').text
 
-            # Extract time from block_id
-            time_range = {
-                'block1': '08:00-09:35',
-                'block2': '09:50-11:25',
-                'block3': '11:40-13:15',
-                'block4': '13:30-15:05',
-                'block5': '15:45-17:20',
-                'block6': '17:35-19:10',
-                'block7': '19:25-21:10'
-            }.get(block_id, '')
-
-            start_time, end_time = time_range.split('-') if time_range else ('', '')
+            # Extract time from block_id using block_hours
+            block_time = block_hours.get(block_id, {})
+            start_time = block_time.get('START', '')
+            end_time = block_time.get('END', '')
 
             lesson_info = {
                 'Subject': name,

@@ -67,7 +67,7 @@ def get_credentials():
 
 def scheduled_job():
     logger.info("Starting scheduled job")
-    group = "WCY22IJ1S1"
+    group = os.getenv("DEFAULT_GROUP", "WCY25IX1S4")
     user_agent = "Automated Scheduler Bot"
 
     logger.info(f"Scraping schedule for group: {group}")
