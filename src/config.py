@@ -14,6 +14,7 @@ SCHEDULE_INTERVAL_HOURS: int = 36
 
 # --- Scraper ---
 LOCATION: str = "academic grounds"
+TIMEZONE: str = "Europe/Warsaw"
 
 BLOCK_HOURS: dict[str, dict[str, str]] = {
     "block1": {"START": "08:00", "END": "09:35"},
