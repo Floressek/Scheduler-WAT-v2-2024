@@ -143,7 +143,7 @@ def home() -> str:
     return "WAT Scheduler is running. Use /scrape/&lt;group&gt; to manually trigger a scrape and update."
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET"])
 def login() -> Response:
     """
     Start Google OAuth2 authorization flow.
@@ -161,7 +161,7 @@ def login() -> Response:
     return redirect(auth_url)
 
 
-@app.route("/oauth2callback")
+@app.route("/oauth2callback", methods=["GET"])
 def oauth2callback() -> Response:
     """
     Google OAuth2 callback. Exchanges authorization code for credentials.
@@ -199,7 +199,7 @@ def oauth2callback() -> Response:
     return redirect("/")
 
 
-@app.route("/delete-token", methods=["POST"])
+@app.route("/delete-token", methods=["DELETE"])
 def delete_token() -> tuple[Response, int]:
     """
     Delete the stored Google OAuth2 token.
@@ -228,7 +228,7 @@ def delete_token() -> tuple[Response, int]:
         return jsonify({"error": "Internal server error"}), 500
 
 
-@app.route("/scrape/<group>")
+@app.route("/scrape/<group>", methods=["POST"])
 def scrape(group: str) -> tuple[Response, int]:
     """
     Scrape WAT schedule for a given group and sync to Google Calendar.
@@ -275,7 +275,7 @@ def scrape(group: str) -> tuple[Response, int]:
         return jsonify({"error": "Internal server error"}), 500
 
 
-@app.route("/run-job")
+@app.route("/run-job", methods=["POST"])
 def run_job() -> tuple[str, int]:
     """
     Manually trigger the scheduled scrape-and-sync job.
