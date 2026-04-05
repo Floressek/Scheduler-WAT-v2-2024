@@ -135,11 +135,13 @@ def home() -> str:
           type: string
     """
     if not os.path.exists(TOKEN_PATH):
+        logger.info("Token not found")
         return (
             "WAT Scheduler is running.<br><br>"
             "<b>Google Calendar not authorized.</b> "
             "<a href='/login'>Click here to authorize</a>."
         )
+    logger.info("Token found")
     return "WAT Scheduler is running. Use /scrape/&lt;group&gt; to manually trigger a scrape and update."
 
 
@@ -158,6 +160,7 @@ def login() -> Response:
     auth_url, state = flow.authorization_url(prompt="consent")
     session["oauth_state"] = state
     session["code_verifier"] = flow.code_verifier
+    logger.info(f"Authorization for URL: {auth_url}")
     return redirect(auth_url)
 
 
@@ -196,6 +199,7 @@ def oauth2callback() -> Response:
     creds = flow.credentials
     with open(TOKEN_PATH, "w") as token:
         token.write(creds.to_json())
+    logger.info("Token saved to token.json")
     return redirect("/")
 
 
@@ -221,7 +225,9 @@ def delete_token() -> tuple[Response, int]:
     try:
         if os.path.exists(TOKEN_PATH):
             os.remove(TOKEN_PATH)
+            logger.info("Token deleted")
             return jsonify({"message": "Token deleted successfully"}), 200
+        logger.info("Token not found")
         return jsonify({"message": "Token does not exist"}), 404
     except Exception as e:
         logger.exception(f"An error occurred: {e}")
@@ -287,6 +293,7 @@ def run_job() -> tuple[str, int]:
           type: string
     """
     scheduled_job()
+    logger.info("Job executed successfully")
     return "Job executed successfully", 200
 
 
