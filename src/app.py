@@ -12,15 +12,12 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
-# Print some useful information for debugging
 print(f"Python path: {sys.path}")
 print(f"Current working directory: {os.getcwd()}")
 print(f"Contents of current directory: {os.listdir('.')}")
 print(f"Contents of /app directory: {os.listdir('/app')}")
 
 app = Flask(__name__)
-
-# Allow HTTP in local development environment
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = '/storage/token.json'
@@ -41,6 +38,7 @@ if not os.path.exists('credentials.json'):
     }
     with open('credentials.json', 'w') as f:
         json.dump(credentials, f)
+
 
 def get_credentials():
     creds = None
@@ -95,6 +93,7 @@ def create_app():
     with app.app_context():
         scheduled_job()
     return app
+
 
 @app.route('/delete-token', methods=["POST"])
 def delete_token():
