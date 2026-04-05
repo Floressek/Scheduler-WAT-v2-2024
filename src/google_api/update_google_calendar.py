@@ -1,6 +1,5 @@
 import os
 from src.utils.custom_logger import google_api_logger as logger
-from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -26,12 +25,7 @@ def get_calendar_service():
             logger.info("Refreshing expired credentials")
             creds.refresh(Request())
         else:
-            logger.info("Starting new authorization flow")
-            flow = Flow.from_client_secrets_file(
-                'credentials.json', SCOPES,
-                redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
-            auth_url, _ = flow.authorization_url(prompt='consent')
-            logger.info(f"Please visit this URL to authorize the application: {auth_url}")
+            logger.info("No valid credentials found. Visit /login to authorize the application.")
             return None
 
         logger.info("Saving credentials to token.json")

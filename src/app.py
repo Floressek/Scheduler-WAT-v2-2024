@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, session
 from apscheduler.schedulers.background import BackgroundScheduler
 from werkzeug import run_simple
 
@@ -18,6 +18,7 @@ print(f"Contents of current directory: {os.listdir('.')}")
 print(f"Contents of /app directory: {os.listdir('/app')}")
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-me")
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 TOKEN_PATH = '/storage/token.json'
@@ -38,29 +39,6 @@ if not os.path.exists('credentials.json'):
     }
     with open('credentials.json', 'w') as f:
         json.dump(credentials, f)
-
-
-def get_credentials():
-    creds = None
-    if os.path.exists(TOKEN_PATH):
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            with open('credentials.json', 'r') as f:
-                client_config = json.load(f)
-            flow = Flow.from_client_config(
-                client_config, SCOPES,
-                redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback')
-            auth_url, _ = flow.authorization_url(prompt='consent')
-            print(f"Please visit this URL to authorize the application: {auth_url}")
-            # Tutaj powinieneś dodać logikę do obsługi autoryzacji
-            # Na przykład, możesz zwrócić auth_url do frontendu
-            # i oczekiwać na callback z kodem autoryzacyjnym
-        with open(TOKEN_PATH, 'w') as token:
-            token.write(creds.to_json())
-    return creds
 
 
 def scheduled_job():
@@ -131,29 +109,50 @@ def scrape(group):
         return jsonify({"error": "Internal server error"}), 500
 
 
+@app.route('/login')
+def login():
+    with open('credentials.json', 'r') as f:
+        client_config = json.load(f)
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=SCOPES,
+        redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback'
+    )
+    auth_url, state = flow.authorization_url(prompt='consent')
+    session['oauth_state'] = state
+    session['code_verifier'] = flow.code_verifier
+    return redirect(auth_url)
+
+
 @app.route('/oauth2callback')
 def oauth2callback():
     with open('credentials.json', 'r') as f:
         client_config = json.load(f)
     flow = Flow.from_client_config(
         client_config,
-        scopes=['https://www.googleapis.com/auth/calendar'],
+        scopes=SCOPES,
+        state=session.get('oauth_state'),
         redirect_uri='https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback'
     )
-
-    flow.fetch_token(authorization_response=request.url)
-
-    # Save the credentials
+    flow.fetch_token(
+        authorization_response=request.url,
+        code_verifier=session.get('code_verifier')
+    )
     creds = flow.credentials
     with open(TOKEN_PATH, 'w') as token:
         token.write(creds.to_json())
-
     return redirect('/')
 
 
 @app.route('/')
 def home():
-    return "WAT Scheduler is running. Use /scrape/<group> to manually trigger a scrape and update."
+    if not os.path.exists(TOKEN_PATH):
+        return (
+            "WAT Scheduler is running.<br><br>"
+            "<b>Google Calendar not authorized.</b> "
+            "<a href='/login'>Click here to authorize</a>."
+        )
+    return "WAT Scheduler is running. Use /scrape/&lt;group&gt; to manually trigger a scrape and update."
 
 
 @app.route('/run-job')
