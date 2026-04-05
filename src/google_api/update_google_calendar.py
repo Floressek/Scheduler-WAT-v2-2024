@@ -7,7 +7,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
 
-from src.config import SCOPES, TOKEN_PATH
+from src.config import SCOPES, TOKEN_PATH, TIMEZONE
 from src.utils.custom_logger import google_api_logger as logger
 
 
@@ -40,7 +40,7 @@ def get_calendar_service() -> Resource | None:
 def create_calendar(service: Resource, calendar_name: str) -> str | None:
     calendar = {
         "summary": calendar_name,
-        "timeZone": "Europe/Warsaw",
+        "timeZone": TIMEZONE,
     }
     try:
         created_calendar = service.calendars().insert(body=calendar).execute()
@@ -101,11 +101,11 @@ def update_calendar_with_schedule(service: Resource, schedule_data: list[dict[st
                     "description": lesson["Description"],
                     "start": {
                         "dateTime": f"{start_date}T{lesson['Start Time']}:00",
-                        "timeZone": "Europe/Warsaw",
+                        "timeZone": TIMEZONE,
                     },
                     "end": {
                         "dateTime": f"{end_date}T{lesson['End Time']}:00",
-                        "timeZone": "Europe/Warsaw",
+                        "timeZone": TIMEZONE,
                     },
                 }
 

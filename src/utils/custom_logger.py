@@ -6,9 +6,11 @@ from logging.handlers import RotatingFileHandler
 
 import pytz
 
+from src.config import TIMEZONE
+
 os.environ["FORCE_COLOR"] = "1"
 
-POLAND_TZ = pytz.timezone("Europe/Warsaw")
+POLAND_TZ = pytz.timezone(TIMEZONE)
 
 COLORS: dict[str, str] = {
     "TIMESTAMP": "\033[36m",
