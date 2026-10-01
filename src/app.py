@@ -107,7 +107,11 @@ def scheduled_job() -> None:
     logger.info(f"Scraped data: {data[:2] if data else 'No data'}...")
 
     logger.info("Updating Google Calendar")
-    update_google_calendar(data)
+    try:
+        update_google_calendar(data)
+    except Exception:
+        logger.exception("Google Calendar update failed")
+        return
     logger.info("Job completed")
 
 

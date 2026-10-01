@@ -9,3 +9,6 @@ gen
 .env
 credentials.json
 token.json
+
+# Local notes
+temp/

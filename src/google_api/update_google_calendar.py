@@ -2,6 +2,7 @@ import os
 from datetime import date, datetime
 from typing import Any
 
+from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import Resource, build
@@ -20,7 +21,13 @@ def get_calendar_service() -> Resource | None:
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             logger.info("Refreshing expired credentials")
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+            except RefreshError as e:
+                # Refresh token revoked/expired - drop it so /login can issue a fresh one.
+                logger.error(f"Token refresh failed ({e}). Removing token, visit /login to re-authorize.")
+                os.remove(TOKEN_PATH)
+                return None
         else:
             logger.info("No valid credentials found. Visit /login to authorize the application.")
             return None
