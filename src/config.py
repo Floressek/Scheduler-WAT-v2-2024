@@ -5,6 +5,10 @@ SCOPES: list[str] = ["https://www.googleapis.com/auth/calendar"]
 TOKEN_PATH: str = "/storage/token.json"
 REDIRECT_URI: str = "https://scheduler-wat-v2-2024-production.up.railway.app/oauth2callback"
 
+# --- Admin auth ---
+# Shared secret for the admin panel and API: Basic auth password or `Authorization: Bearer <token>`.
+ADMIN_TOKEN: str | None = os.getenv("ADMIN_TOKEN")
+
 # --- Paths ---
 CREDENTIALS_PATH: str = "credentials.json"
 

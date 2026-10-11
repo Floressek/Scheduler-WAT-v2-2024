@@ -20,8 +20,8 @@ def parse_date(date_str: str) -> datetime:
 def scrape_schedule(
     group: str, user_agent: str | None = None
 ) -> tuple[list[dict[str, Any]], None] | tuple[None, str]:
-    # Without `date` the site serves the current semester; `date` must be a semester-start
-    # timestamp, so passing "now" returns an empty schedule.
+    # `date` only accepts semester-start timestamps (any other value returns an empty schedule)
+    # and the group's plan is served without it anyway.
     url = f"https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id={group}"
     headers = {"User-Agent": user_agent or get_random_user_agent()}
 

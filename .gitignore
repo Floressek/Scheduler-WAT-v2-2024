@@ -12,3 +12,4 @@ token.json
 
 # Local notes
 temp/
+http-client.private.env.json

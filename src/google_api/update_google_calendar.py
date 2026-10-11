@@ -71,7 +71,7 @@ def delete_old_calendars(service: Resource, prefix: str = "WAT-calendar") -> Non
         logger.error(f"Error occurred: {error}")
 
 
-def update_calendar_with_schedule(service: Resource, schedule_data: list[dict[str, Any]]) -> None:
+def update_calendar_with_schedule(service: Resource, schedule_data: list[dict[str, Any]]) -> bool:
     logger.info(f"Starting calendar update with {len(schedule_data)} events")
 
     try:
@@ -84,13 +84,15 @@ def update_calendar_with_schedule(service: Resource, schedule_data: list[dict[st
 
         if not calendar_id:
             logger.error("Failed to create new calendar")
-            return
+            return False
 
         logger.info(f"Created new calendar ID: {calendar_id}")
+        failed: list[str] = []
 
         def batch_callback(request_id: str, response: Any, exception: Exception | None) -> None:
             if exception is not None:
                 logger.error(f"Error in batch request {request_id}: {exception}")
+                failed.append(request_id)
             else:
                 logger.debug(f"Event created successfully: {response.get('id', 'unknown')}")
 
@@ -126,21 +128,27 @@ def update_calendar_with_schedule(service: Resource, schedule_data: list[dict[st
 
             except Exception as e:
                 logger.error(f"Error creating event {index + 1}: {e}")
+                failed.append(str(index))
 
         if len(batch._requests) > 0:
             logger.info(f"Executing batch request for events {batch_start_index + 1}-{len(schedule_data)}")
             batch.execute()
 
+        if failed:
+            logger.error(f"Calendar update finished with {len(failed)} failed events")
+            return False
         logger.info("Calendar update completed successfully")
+        return True
     except Exception as e:
         logger.error(f"Error during calendar update: {e}")
+        return False
 
 
-def main(schedule_data: list[dict[str, Any]]) -> None:
+def main(schedule_data: list[dict[str, Any]]) -> bool:
     service = get_calendar_service()
     if not service:
-        return
-    update_calendar_with_schedule(service, schedule_data)
+        return False
+    return update_calendar_with_schedule(service, schedule_data)
 
 
 if __name__ == "__main__":

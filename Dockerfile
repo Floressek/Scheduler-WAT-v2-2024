@@ -1,9 +1,10 @@
 # Use the official Python image from DockerHub
-FROM python:3.12.6-slim
+FROM python:3.14-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV UV_PYTHON_DOWNLOADS=never
 
 # Define environment variables for Railway compatibility
 ENV PYTHONPATH="/app:$PYTHONPATH"
@@ -15,7 +16,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* /app/
 
 # Install the dependencies
-RUN pip install --no-cache-dir uv && uv sync --frozen --no-dev
+RUN pip install --no-cache-dir uv==0.11.2 && uv sync --frozen --no-dev
 
 # Copy the rest of the application code
 COPY . /app/

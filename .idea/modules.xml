@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/flaskProject-wat.iml" filepath="$PROJECT_DIR$/.idea/flaskProject-wat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/scheduler-wat-v2-2024.iml" filepath="$PROJECT_DIR$/.idea/scheduler-wat-v2-2024.iml" />
     </modules>
   </component>
 </project>

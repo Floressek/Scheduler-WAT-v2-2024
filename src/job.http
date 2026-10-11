@@ -8,13 +8,20 @@ GET https://scheduler-wat-v2-2024-production.up.railway.app/
 
 ###
 
-# curl -X POST https://scheduler-wat-v2-2024-production.up.railway.app/delete-token
-POST https://scheduler-wat-v2-2024-production.up.railway.app/delete-token
+# curl -X DELETE -H "Authorization: Bearer $ADMIN_TOKEN" https://scheduler-wat-v2-2024-production.up.railway.app/delete-token
+Authorization: Bearer {{admin_token}}
+DELETE https://scheduler-wat-v2-2024-production.up.railway.app/delete-token
 
 ###
 
-# curl https://scheduler-wat-v2-2024-production.up.railway.app/run-job
-GET https://scheduler-wat-v2-2024-production.up.railway.app/run-job
+# curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" https://scheduler-wat-v2-2024-production.up.railway.app/run-job
+Authorization: Bearer {{admin_token}}
+POST https://scheduler-wat-v2-2024-production.up.railway.app/run-job
 
 ###
 
+# curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" https://scheduler-wat-v2-2024-production.up.railway.app/scrape/WCY25IB1S4
+Authorization: Bearer {{admin_token}}
+POST https://scheduler-wat-v2-2024-production.up.railway.app/scrape/WCY25IB1S4
+
+###

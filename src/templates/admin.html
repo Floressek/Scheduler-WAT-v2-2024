@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WAT Scheduler – admin</title>
+  <style>
+    :root { --bg: #f6f7f9; --card: #fff; --text: #1d2330; --muted: #6b7280; --border: #e3e6eb;
+            --ok: #15803d; --err: #b91c1c; --accent: #2563eb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #111418; --card: #1a1f26; --text: #e6e9ee; --muted: #9aa3af; --border: #2b323c;
+              --ok: #4ade80; --err: #f87171; --accent: #60a5fa; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--text);
+           font: 15px/1.5 system-ui, -apple-system, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; display: grid; gap: 16px; }
+    h1 { font-size: 20px; margin: 0; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+    section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+    dt { color: var(--muted); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .ok { color: var(--ok); font-weight: 600; }
+    .err { color: var(--err); font-weight: 600; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    button, .btn { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+                   background: var(--card); color: var(--text); cursor: pointer; text-decoration: none; }
+    .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .danger { color: var(--err); }
+    button:disabled { opacity: .6; cursor: wait; }
+    #result { margin-top: 8px; color: var(--muted); min-height: 1.5em; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 500; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>WAT Scheduler · {{ group }}</h1>
+
+  <section>
+    <h2>Google token</h2>
+    {% if token %}
+      <dl>
+        <dt>Status</dt><dd class="ok">Zapisany</dd>
+        <dt>Access token wygasa</dt><dd>{{ token.expiry or "—" }}</dd>
+        <dt>Refresh token</dt><dd>{{ "tak" if token.refresh else "brak" }}</dd>
+      </dl>
+    {% else %}
+      <p class="err">Brak tokena – kliknij „Autoryzuj Google”.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Ostatni run</h2>
+    {% if last_run %}
+      <dl>
+        <dt>Kiedy</dt><dd>{{ last_run.time.strftime("%Y-%m-%d %H:%M:%S") }}</dd>
+        <dt>Wynik</dt><dd class="{{ 'ok' if last_run.ok else 'err' }}">{{ "OK" if last_run.ok else "Błąd" }}</dd>
+        <dt>Komunikat</dt><dd>{{ last_run.message }}</dd>
+        <dt>Zajęć</dt><dd>{{ last_run.lessons }}</dd>
+      </dl>
+    {% else %}
+      <p>Brak runów od startu serwera.</p>
+    {% endif %}
+    <dl style="margin-top:8px">
+      <dt>Następny run</dt><dd>{{ next_run.strftime("%Y-%m-%d %H:%M") if next_run else "—" }}</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Akcje</h2>
+    <div class="actions">
+      <button class="primary" data-method="POST" data-url="/run-job">Uruchom job</button>
+      <a class="btn" href="/login">Autoryzuj Google</a>
+      <a class="btn" href="/apidocs/">API docs</a>
+      <button class="danger" data-method="DELETE" data-url="/delete-token"
+              data-confirm="Usunąć token Google? Sync przestanie działać do ponownej autoryzacji.">Usuń token</button>
+    </div>
+    <div id="result"></div>
+  </section>
+
+  {% if upcoming %}
+  <section>
+    <h2>Najbliższe zajęcia</h2>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Data</th><th>Godz.</th><th>Zajęcia</th></tr>
+        {% for l in upcoming %}
+          <tr><td>{{ l["Start Date"] }}</td><td>{{ l["Start Time"] }}–{{ l["End Time"] }}</td><td>{{ l["Description"] }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</main>
+<script>
+  const result = document.getElementById("result");
+  document.querySelectorAll("button[data-url]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (btn.dataset.confirm && !confirm(btn.dataset.confirm)) return;
+      btn.disabled = true;
+      result.textContent = "Pracuję…";
+      try {
+        const res = await fetch(btn.dataset.url, { method: btn.dataset.method });
+        const body = await res.json().catch(() => ({}));
+        result.textContent = `${res.status}: ${body.message || body.error || res.statusText}`;
+        setTimeout(() => location.reload(), 1200);
+      } catch (e) {
+        result.textContent = `Błąd: ${e}`;
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
+</body>
+</html>
