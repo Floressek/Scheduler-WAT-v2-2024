@@ -29,7 +29,12 @@
     .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     .danger { color: var(--err); }
     button:disabled { opacity: .6; cursor: wait; }
-    #result { margin-top: 8px; color: var(--muted); min-height: 1.5em; }
+    #result, .result { margin-top: 8px; color: var(--muted); min-height: 1.5em; }
+    .hint { margin: 0 0 10px; color: var(--muted); }
+    .hint a { color: var(--accent); }
+    .drop { display: block; padding: 22px 16px; border: 2px dashed var(--border); border-radius: 10px;
+            text-align: center; color: var(--muted); cursor: pointer; }
+    .drop.over { border-color: var(--accent); color: var(--text); }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -58,6 +63,7 @@
     {% if last_run %}
       <dl>
         <dt>Kiedy</dt><dd>{{ last_run.time.strftime("%Y-%m-%d %H:%M:%S") }}</dd>
+        <dt>Źródło</dt><dd>{{ "upload HTML" if last_run.source == "upload" else "automat" }}</dd>
         <dt>Wynik</dt><dd class="{{ 'ok' if last_run.ok else 'err' }}">{{ "OK" if last_run.ok else "Błąd" }}</dd>
         <dt>Komunikat</dt><dd>{{ last_run.message }}</dd>
         <dt>Zajęć</dt><dd>{{ last_run.lessons }}</dd>
@@ -66,6 +72,9 @@
       <p>Brak runów od startu serwera.</p>
     {% endif %}
     <dl style="margin-top:8px">
+      <dt>Ostatni udany sync</dt>
+      <dd>{% if last_run.last_success %}{{ last_run.last_success.time.strftime("%Y-%m-%d %H:%M") }}
+        ({{ "upload HTML" if last_run.last_success.source == "upload" else "automat" }}){% else %}—{% endif %}</dd>
       <dt>Następny run</dt><dd>{{ next_run.strftime("%Y-%m-%d %H:%M") if next_run else "—" }}</dd>
     </dl>
   </section>
@@ -80,6 +89,17 @@
               data-confirm="Usunąć token Google? Sync przestanie działać do ponownej autoryzacji.">Usuń token</button>
     </div>
     <div id="result"></div>
+  </section>
+
+  <section>
+    <h2>Upload planu</h2>
+    <p class="hint">Otwórz <a href="https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id={{ group }}" target="_blank" rel="noopener">plan grupy {{ group }}</a>,
+      zapisz stronę (Ctrl+S / ⌘S) i wrzuć plik <code>.html</code> tutaj.</p>
+    <label id="drop" class="drop">
+      <input id="file" type="file" accept=".html,.htm,text/html" hidden>
+      <span id="drop-text">Przeciągnij plik lub kliknij, żeby wybrać</span>
+    </label>
+    <div id="upload-result" class="result"></div>
   </section>
 
   {% if upcoming %}
@@ -114,6 +134,35 @@
       }
     });
   });
+
+  const drop = document.getElementById("drop");
+  const fileInput = document.getElementById("file");
+  const uploadResult = document.getElementById("upload-result");
+
+  async function uploadFile(file) {
+    if (!file) return;
+    document.getElementById("drop-text").textContent = file.name;
+    uploadResult.textContent = "Wysyłam i synchronizuję…";
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const res = await fetch("/upload-schedule", { method: "POST", body: form });
+      const body = await res.json().catch(() => ({}));
+      uploadResult.textContent = `${res.status}: ${body.message || body.error || res.statusText}`;
+      if (res.ok) setTimeout(() => location.reload(), 1500);
+    } catch (e) {
+      uploadResult.textContent = `Błąd: ${e}`;
+    }
+  }
+
+  fileInput.addEventListener("change", () => uploadFile(fileInput.files[0]));
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => {
+    e.preventDefault(); drop.classList.add("over");
+  }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => {
+    e.preventDefault(); drop.classList.remove("over");
+  }));
+  drop.addEventListener("drop", (e) => uploadFile(e.dataTransfer.files[0]));
 </script>
 </body>
 </html>

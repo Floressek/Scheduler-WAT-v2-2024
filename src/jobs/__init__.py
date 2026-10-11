@@ -1,1 +1,1 @@
-from .sync import last_run, next_run_time, scheduled_job, start_scheduler
+from .sync import last_run, next_run_time, scheduled_job, start_scheduler, sync_from_html

@@ -14,6 +14,7 @@ from src.swagger import SWAGGER_TEMPLATE
 app = Flask(__name__)
 # Random fallback is fine with a single gunicorn worker: the session only carries OAuth state.
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # saved schedule pages are ~200 KB
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 Swagger(app, template=SWAGGER_TEMPLATE)

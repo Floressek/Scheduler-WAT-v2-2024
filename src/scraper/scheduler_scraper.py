@@ -1,4 +1,5 @@
 import random
+import re
 from datetime import datetime
 from typing import Any
 
@@ -17,19 +18,18 @@ def parse_date(date_str: str) -> datetime:
     return datetime.strptime(date_str, "%Y_%m_%d")
 
 
-def scrape_schedule(
-    group: str, user_agent: str | None = None
-) -> tuple[list[dict[str, Any]], None] | tuple[None, str]:
-    # `date` only accepts semester-start timestamps (any other value returns an empty schedule)
-    # and the group's plan is served without it anyway.
-    url = f"https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id={group}"
-    headers = {"User-Agent": user_agent or get_random_user_agent()}
+GROUP_HEADER = re.compile(r"Rozkład zajęć grupy:\s*(\S+)")
 
+
+def parse_group(html: str) -> str | None:
+    header = BeautifulSoup(html, "html.parser").find("h1", string=GROUP_HEADER)
+    match = GROUP_HEADER.search(header.get_text()) if header else None
+    return match.group(1) if match else None
+
+
+def parse_schedule(html: str) -> tuple[list[dict[str, Any]], None] | tuple[None, str]:
     try:
-        response = requests.get(url, headers=headers, verify=False)
-        response.raise_for_status()
-
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
         schedule_data: list[dict[str, Any]] = []
 
         lessons = soup.find("div", class_="lessons hidden")
@@ -68,9 +68,24 @@ def scrape_schedule(
 
         return schedule_data, None
 
+    except Exception as e:
+        logger.error(f"Failed to parse schedule: {e}")
+        return None, f"Failed to parse schedule: {e}"
+
+
+def scrape_schedule(
+    group: str, user_agent: str | None = None
+) -> tuple[list[dict[str, Any]], None] | tuple[None, str]:
+    # `date` only accepts semester-start timestamps (any other value returns an empty schedule)
+    # and the group's plan is served without it anyway.
+    url = f"https://planzajec.wcy.wat.edu.pl/pl/rozklad?grupa_id={group}"
+    headers = {"User-Agent": user_agent or get_random_user_agent()}
+
+    try:
+        response = requests.get(url, headers=headers, verify=False)
+        response.raise_for_status()
     except requests.RequestException as e:
         logger.error(f"Request failed: {e}")
         return None, f"Failed to retrieve the page: {e}"
-    except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
-        return None, f"An unexpected error occurred: {e}"
+
+    return parse_schedule(response.text)
